@@ -1,0 +1,129 @@
+## GitHub Integration Panel for Jira Issue View
+## Compatible with Jira 9.12+ and 10.3+
+
+<div id="github-integration-panel" class="module toggle-wrap">
+    <div class="mod-header">
+        <h2 class="toggle-title">GitHub Integration</h2>
+    </div>
+    <div class="mod-content">
+        #if ($hasConfiguration)
+            ## Quick Actions
+            <div class="github-actions" style="margin-bottom: 15px;">
+                <button class="aui-button aui-button-subtle" id="github-create-branch-btn">
+                    <span class="aui-icon aui-icon-small aui-iconfont-devtools-branch"></span>
+                    Create Branch
+                </button>
+                <button class="aui-button aui-button-subtle" id="github-create-pr-btn">
+                    <span class="aui-icon aui-icon-small aui-iconfont-devtools-pull-request"></span>
+                    Create PR
+                </button>
+            </div>
+
+            ## GitHub Information Display
+            <div id="github-info-container">
+                <div class="github-info-loading" style="text-align: center; padding: 20px;">
+                    <span class="aui-icon aui-icon-wait">Loading...</span>
+                </div>
+            </div>
+
+            ## Hidden data for JavaScript
+            <input type="hidden" id="github-issue-key" value="$issueKey" />
+            <input type="hidden" id="github-rest-url" value="$restUrl" />
+            <input type="hidden" id="github-issue-summary" value="$issue.summary" />
+            <input type="hidden" id="github-project-key" value="$projectKey" />
+
+        #else
+            ## Configuration not set
+            <div class="aui-message aui-message-info">
+                <p class="title">
+                    <span class="aui-icon icon-info"></span>
+                    <strong>Not Configured</strong>
+                </p>
+                <p>GitHub integration is not configured.
+                    <a href="$configUrl">Configure now</a> (admin access required)
+                </p>
+            </div>
+        #end
+    </div>
+</div>
+
+#if ($hasConfiguration)
+## Create Branch Dialog (AUI Dialog2)
+<section id="github-create-branch-dialog" class="aui-dialog2 aui-dialog2-medium aui-layer" role="dialog" hidden>
+    <header class="aui-dialog2-header">
+        <h2 class="aui-dialog2-header-main">Create GitHub Branch</h2>
+        <a class="aui-dialog2-header-close">
+            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
+        </a>
+    </header>
+    <div class="aui-dialog2-content">
+        <form class="aui" id="github-branch-form">
+            <div class="field-group">
+                <label for="github-base-branch">Base Branch<span class="aui-icon icon-required"></span></label>
+                <input class="text" type="text" id="github-base-branch" name="baseBranch" value="main" />
+                <div class="description">The branch to create from (e.g., main, develop)</div>
+            </div>
+            <div class="field-group">
+                <label for="github-branch-name">Branch Name<span class="aui-icon icon-required"></span></label>
+                <input class="text long-field" type="text" id="github-branch-name" name="branchName"
+                       placeholder="feature/$issueKey-description" />
+                <div class="description">Branch will be created as: feature/$issueKey-[your-description]</div>
+            </div>
+            <div class="field-group">
+                <button type="button" class="aui-button" id="github-branch-autofill">
+                    Auto-fill from Issue
+                </button>
+            </div>
+        </form>
+    </div>
+    <footer class="aui-dialog2-footer">
+        <div class="aui-dialog2-footer-actions">
+            <button id="github-branch-create" class="aui-button aui-button-primary">Create Branch</button>
+            <button id="github-branch-cancel" class="aui-button aui-button-link">Cancel</button>
+        </div>
+        <div class="aui-dialog2-footer-hint" id="github-branch-status"></div>
+    </footer>
+</section>
+
+## Create PR Dialog (AUI Dialog2)
+<section id="github-create-pr-dialog" class="aui-dialog2 aui-dialog2-medium aui-layer" role="dialog" hidden>
+    <header class="aui-dialog2-header">
+        <h2 class="aui-dialog2-header-main">Create Pull Request</h2>
+        <a class="aui-dialog2-header-close">
+            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
+        </a>
+    </header>
+    <div class="aui-dialog2-content">
+        <form class="aui" id="github-pr-form">
+            <div class="field-group">
+                <label for="github-source-branch">Source Branch<span class="aui-icon icon-required"></span></label>
+                <input class="text long-field" type="text" id="github-source-branch" name="sourceBranch"
+                       placeholder="feature/$issueKey-branch-name" />
+                <div class="description">The branch with your changes</div>
+            </div>
+            <div class="field-group">
+                <label for="github-target-branch">Target Branch<span class="aui-icon icon-required"></span></label>
+                <input class="text" type="text" id="github-target-branch" name="targetBranch" value="main" />
+                <div class="description">The branch to merge into (e.g., main, develop)</div>
+            </div>
+            <div class="field-group">
+                <label for="github-pr-title">Title<span class="aui-icon icon-required"></span></label>
+                <input class="text long-field" type="text" id="github-pr-title" name="title"
+                       value="[$issueKey] $issue.summary" />
+            </div>
+            <div class="field-group">
+                <label for="github-pr-description">Description</label>
+                <textarea class="textarea long-field" id="github-pr-description" name="description"
+                          rows="5" placeholder="Describe your changes..."></textarea>
+            </div>
+        </form>
+    </div>
+    <footer class="aui-dialog2-footer">
+        <div class="aui-dialog2-footer-actions">
+            <button id="github-pr-create" class="aui-button aui-button-primary">Create Pull Request</button>
+            <button id="github-pr-cancel" class="aui-button aui-button-link">Cancel</button>
+        </div>
+        <div class="aui-dialog2-footer-hint" id="github-pr-status"></div>
+    </footer>
+</section>
+#end

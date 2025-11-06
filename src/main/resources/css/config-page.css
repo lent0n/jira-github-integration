@@ -1,0 +1,398 @@
+/**
+ * GitHub Integration Admin Configuration Page Styles
+ * Compatible with Jira 9.12+ and 10.3+
+ * Uses AUI (Atlassian User Interface) framework conventions
+ */
+
+/* Page Layout */
+.aui-page-panel-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Section Headers */
+.aui-page-panel-content h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #172b4d;
+    margin: 30px 0 15px 0;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.aui-page-panel-content h2:first-of-type {
+    margin-top: 0;
+}
+
+/* Form Layout */
+#github-config-form {
+    margin-top: 20px;
+}
+
+#github-config-form .field-group {
+    margin-bottom: 20px;
+}
+
+#github-config-form label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+    color: #172b4d;
+}
+
+#github-config-form input.text,
+#github-config-form input.long-field {
+    max-width: 100%;
+}
+
+#github-config-form input.long-field {
+    width: 600px;
+}
+
+#github-config-form .description {
+    font-size: 12px;
+    color: #707070;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+/* Required Field Indicator */
+.aui-icon.icon-required {
+    color: #de350b;
+    margin-left: 3px;
+}
+
+/* Repository Mappings */
+#repository-mappings {
+    margin-bottom: 20px;
+}
+
+.repository-mapping {
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.repository-mapping .aui-item {
+    flex: 1;
+    min-width: 0; /* Allow flex items to shrink */
+}
+
+.repository-mapping .aui-item:last-child {
+    flex: 0 0 auto;
+}
+
+.repository-mapping .field-group {
+    margin-bottom: 0;
+}
+
+.repository-mapping label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #505f79;
+    margin-bottom: 3px;
+}
+
+.repository-mapping input.text {
+    width: 100%;
+}
+
+/* Status Messages */
+#test-connection-status,
+#register-webhooks-status,
+#save-status {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+#test-connection-status .aui-icon,
+#register-webhooks-status .aui-icon,
+#save-status .aui-icon {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+/* Loading Animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.aui-icon-wait {
+    animation: spin 1s linear infinite;
+}
+
+/* Banner Messages */
+.aui-message {
+    margin-bottom: 20px;
+}
+
+.aui-message .title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+/* Buttons Container */
+.buttons-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.buttons-container .buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Button Spacing */
+.aui-button .aui-icon {
+    margin-right: 5px;
+}
+
+/* Password Field Placeholders */
+input[type="password"]::placeholder {
+    font-style: italic;
+    color: #999;
+}
+
+/* Horizontal Rule */
+hr {
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 30px 0;
+}
+
+/* Checkbox Labels */
+label input.checkbox {
+    margin-right: 8px;
+}
+
+/* Readonly Fields */
+input[readonly] {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    color: #707070;
+}
+
+/* Field Group with Inline Buttons */
+.field-group > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.field-group > div input {
+    flex: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    #github-config-form input.long-field {
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .repository-mapping {
+        flex-wrap: wrap;
+    }
+
+    .repository-mapping .aui-item {
+        flex: 1 1 45%;
+        min-width: 200px;
+    }
+
+    .repository-mapping .aui-item:last-child {
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .aui-page-panel-content {
+        padding: 15px;
+    }
+
+    .repository-mapping {
+        flex-direction: column;
+    }
+
+    .repository-mapping .aui-item {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .buttons-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .buttons-container .buttons {
+        width: 100%;
+    }
+
+    .buttons-container .buttons button {
+        flex: 1;
+    }
+
+    #github-config-form input.long-field {
+        width: 100%;
+    }
+}
+
+/* Dark Mode Support (Jira 10.3+) */
+@media (prefers-color-scheme: dark) {
+    .aui-page-panel-content h2 {
+        color: #b6c2cf;
+        border-bottom-color: #3c4147;
+    }
+
+    #github-config-form label {
+        color: #b6c2cf;
+    }
+
+    #github-config-form .description {
+        color: #9fadbc;
+    }
+
+    .repository-mapping {
+        background-color: #2c333a;
+        border-color: #3c4147;
+    }
+
+    .repository-mapping label {
+        color: #9fadbc;
+    }
+
+    input[readonly] {
+        background-color: #1d2125;
+        color: #9fadbc;
+    }
+
+    hr {
+        border-top-color: #3c4147;
+    }
+
+    .buttons-container {
+        border-top-color: #3c4147;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .aui-page-header,
+    .buttons-container,
+    .aui-button {
+        display: none;
+    }
+
+    .repository-mapping {
+        page-break-inside: avoid;
+    }
+
+    input[type="password"] {
+        -webkit-text-security: disc;
+    }
+}
+
+/* Accessibility Improvements */
+button:focus,
+input:focus {
+    outline: 2px solid #4c9aff;
+    outline-offset: 2px;
+}
+
+/* Success/Error Icon Colors */
+.aui-iconfont-approve {
+    color: #00875a;
+}
+
+.aui-iconfont-error {
+    color: #de350b;
+}
+
+.aui-iconfont-warning {
+    color: #ff991f;
+}
+
+/* Field Validation States */
+input.error {
+    border-color: #de350b;
+}
+
+input.success {
+    border-color: #00875a;
+}
+
+/* Tooltip Support */
+.field-help {
+    display: inline-block;
+    margin-left: 5px;
+    color: #707070;
+    cursor: help;
+}
+
+/* Configuration Status Indicators */
+.config-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.config-status.configured {
+    background-color: #e3fcef;
+    color: #00875a;
+}
+
+.config-status.not-configured {
+    background-color: #fff0b3;
+    color: #ff991f;
+}
+
+.config-status.error {
+    background-color: #ffebe6;
+    color: #de350b;
+}
+
+/* Repository Mapping Drag Handle (Future Enhancement) */
+.repository-mapping .drag-handle {
+    cursor: move;
+    color: #707070;
+    margin-right: 10px;
+}
+
+.repository-mapping .drag-handle:hover {
+    color: #172b4d;
+}
+
+/* Form Section Collapsible (Future Enhancement) */
+.form-section-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.form-section-header:hover {
+    background-color: #f5f5f5;
+}
+
+.form-section-content {
+    transition: max-height 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.form-section-content.collapsed {
+    max-height: 0;
+}

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<atlassian-plugin key="${atlassian.plugin.key}"
+                  name="${project.name}"
+                  plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}"
+                url="${project.organization.url}" />
+        <param name="plugin-icon">images/pluginIcon.png</param>
+        <param name="plugin-logo">images/pluginLogo.png</param>
+        <param name="atlassian-data-center-status">compatible</param>
+        <param name="atlassian-data-center-compatible">true</param>
+    </plugin-info>
+
+    <!-- i18n for names and descriptions -->
+    <resource type="i18n" name="i18n" location="i18n/github-integration"/>
+
+    <!-- REST Resources -->
+    <rest key="github-integration-rest"
+          path="/github-integration"
+          version="1.0">
+        <description>REST API for GitHub Integration</description>
+    </rest>
+
+    <!-- Configuration Servlet -->
+    <servlet key="github-integration-admin-servlet"
+             name="GitHub Integration Admin Servlet"
+             class="com.healthcanada.jira.github.ui.ConfigurationServlet">
+        <description>Configuration page for GitHub Integration</description>
+        <url-pattern>/github-integration/admin</url-pattern>
+    </servlet>
+
+    <!-- Webhook Listener Servlet -->
+    <servlet key="github-webhook-servlet"
+             name="GitHub Webhook Listener"
+             class="com.healthcanada.jira.github.webhook.GitHubWebhookListener">
+        <description>Receives webhooks from GitHub Enterprise</description>
+        <url-pattern>/github-webhook</url-pattern>
+    </servlet>
+
+    <!-- Admin Menu Link -->
+    <web-item key="github-integration-admin-link"
+              name="GitHub Integration Admin Link"
+              section="system.admin/globalsettings"
+              weight="100">
+        <description>Link to GitHub Integration configuration</description>
+        <label key="github-integration.admin.link.label">GitHub Integration</label>
+        <link>/plugins/servlet/github-integration/admin</link>
+        <condition class="com.atlassian.jira.plugin.webfragment.conditions.UserIsAdminCondition"/>
+    </web-item>
+
+    <!-- Issue View Web Panel -->
+    <web-panel key="github-integration-panel"
+               name="GitHub Integration Panel"
+               location="atl.jira.view.issue.right.context"
+               weight="100">
+        <description>Displays GitHub information for the issue</description>
+        <resource name="view" type="velocity" location="templates/github-panel.vm"/>
+        <context-provider class="com.healthcanada.jira.github.ui.GitHubPanelContextProvider"/>
+        <condition class="com.healthcanada.jira.github.ui.GitHubPanelCondition"/>
+    </web-panel>
+
+    <!-- Web Resources -->
+    <web-resource key="github-integration-resources"
+                  name="GitHub Integration Resources">
+        <description>JavaScript and CSS for GitHub Integration</description>
+
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <dependency>com.atlassian.auiplugin:dialog2</dependency>
+
+        <resource type="download" name="github-panel.js" location="js/github-panel.js"/>
+        <resource type="download" name="github-integration.css" location="css/github-integration.css"/>
+
+        <context>atl.jira.view.issue</context>
+    </web-resource>
+
+    <web-resource key="github-integration-admin-resources"
+                  name="GitHub Integration Admin Resources">
+        <description>JavaScript and CSS for admin configuration</description>
+
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+
+        <resource type="download" name="config-page.js" location="js/config-page.js"/>
+        <resource type="download" name="config-page.css" location="css/config-page.css"/>
+
+        <context>github-integration-admin</context>
+    </web-resource>
+
+    <!-- Component Declarations -->
+    <component key="pluginConfigurationManager"
+               name="Plugin Configuration Manager"
+               class="com.healthcanada.jira.github.storage.PluginConfigurationManager"
+               public="true">
+        <description>Manages plugin configuration storage</description>
+    </component>
+
+    <component key="tokenEncryption"
+               name="Token Encryption"
+               class="com.healthcanada.jira.github.security.TokenEncryption"
+               public="true">
+        <description>Handles encryption and decryption of sensitive data</description>
+    </component>
+
+    <component key="githubEnterpriseClient"
+               name="GitHub Enterprise Client"
+               class="com.healthcanada.jira.github.service.GitHubEnterpriseClient"
+               public="true">
+        <description>HTTP client for GitHub Enterprise API</description>
+    </component>
+
+    <component key="githubService"
+               name="GitHub Service"
+               class="com.healthcanada.jira.github.service.GitHubService"
+               public="true">
+        <description>Business logic for GitHub operations</description>
+    </component>
+
+    <component key="jiraService"
+               name="Jira Service"
+               class="com.healthcanada.jira.github.service.JiraService"
+               public="true">
+        <description>Business logic for Jira operations</description>
+    </component>
+
+    <component key="syncService"
+               name="Sync Service"
+               class="com.healthcanada.jira.github.service.SyncService"
+               public="true">
+        <description>Orchestrates two-way synchronization</description>
+    </component>
+
+    <component key="webhookValidator"
+               name="Webhook Validator"
+               class="com.healthcanada.jira.github.security.WebhookValidator"
+               public="true">
+        <description>Validates GitHub webhook signatures</description>
+    </component>
+</atlassian-plugin>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GitHub Integration - Configuration</title>
+    <meta name="decorator" content="atl.admin">
+    <meta name="application-base-url" content="$baseUrl">
+    $webResourceManager.requireResource("com.healthcanada.jira.github:github-integration-admin-resources")
+</head>
+<body>
+<header class="aui-page-header">
+    <div class="aui-page-header-inner">
+        <div class="aui-page-header-main">
+            <h1>GitHub Integration Configuration</h1>
+        </div>
+        <div class="aui-page-header-actions">
+            <div class="aui-buttons">
+                <a href="$githubApiDocs" target="_blank" class="aui-button aui-button-link">
+                    <span class="aui-icon aui-icon-small aui-iconfont-help">Help</span>
+                    Documentation
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="aui-page-panel">
+    <div class="aui-page-panel-inner">
+        <section class="aui-page-panel-content">
+
+            <!-- Configuration Status Banner -->
+            #if ($hasConfiguration)
+                #if ($allWebhooksRegistered)
+                    <div class="aui-message aui-message-success">
+                        <p class="title">
+                            <span class="aui-icon icon-success"></span>
+                            <strong>Configuration Complete</strong>
+                        </p>
+                        <p>GitHub integration is configured with $repositoryCount repository mapping(s) and $registeredWebhooks webhook(s) registered.</p>
+                    </div>
+                #else
+                    <div class="aui-message aui-message-warning">
+                        <p class="title">
+                            <span class="aui-icon icon-warning"></span>
+                            <strong>Webhooks Not Registered</strong>
+                        </p>
+                        <p>Configuration exists but webhooks are not registered. Click "Register Webhooks" below to complete setup.</p>
+                    </div>
+                #end
+            #else
+                <div class="aui-message aui-message-info">
+                    <p class="title">
+                        <span class="aui-icon icon-info"></span>
+                        <strong>Not Configured</strong>
+                    </p>
+                    <p>Configure GitHub Enterprise connection settings and repository mappings to get started.</p>
+                </div>
+            #end
+
+            <!-- Configuration Form -->
+            <form class="aui" id="github-config-form">
+
+                <!-- GitHub Enterprise Connection -->
+                <h2>GitHub Enterprise Connection</h2>
+
+                <div class="field-group">
+                    <label for="githubEnterpriseUrl">
+                        GitHub Enterprise URL<span class="aui-icon icon-required"></span>
+                    </label>
+                    <input class="text long-field" type="text" id="githubEnterpriseUrl" name="githubEnterpriseUrl"
+                           placeholder="https://github.company.com"
+                           value="#if($config)$!config.githubEnterpriseUrl#end" />
+                    <div class="description">Base URL of your GitHub Enterprise instance (e.g., https://github.company.com)</div>
+                </div>
+
+                <div class="field-group">
+                    <label for="githubApiUrl">GitHub API URL</label>
+                    <input class="text long-field" type="text" id="githubApiUrl" name="githubApiUrl"
+                           placeholder="https://github.company.com/api/v3"
+                           value="#if($config)$!config.githubApiUrl#end" />
+                    <div class="description">GitHub API URL (leave empty to auto-detect from Enterprise URL)</div>
+                </div>
+
+                <div class="field-group">
+                    <label for="githubToken">
+                        Personal Access Token<span class="aui-icon icon-required"></span>
+                    </label>
+                    <input class="text long-field" type="password" id="githubToken" name="githubToken"
+                           placeholder="#if($hasToken)Token is set - enter new token to update#else Enter GitHub personal access token#end" />
+                    <div class="description">
+                        Token with repo and admin:repo_hook permissions.
+                        #if($hasToken)
+                            <strong style="color: #00875a;">Token is currently set.</strong> Leave empty to keep existing token.
+                        #end
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label for="trustCustomCertificates">
+                        <input class="checkbox" type="checkbox" id="trustCustomCertificates" name="trustCustomCertificates"
+                               #if($config && $config.trustCustomCertificates)checked#end />
+                        Trust Custom SSL Certificates
+                    </label>
+                    <div class="description">Enable if using self-signed certificates (not recommended for production)</div>
+                </div>
+
+                <div class="field-group">
+                    <button type="button" class="aui-button" id="test-connection-btn">
+                        <span class="aui-icon aui-icon-small aui-iconfont-check-circle"></span>
+                        Test Connection
+                    </button>
+                    <span id="test-connection-status" style="margin-left: 10px;"></span>
+                </div>
+
+                <hr />
+
+                <!-- Webhook Configuration -->
+                <h2>Webhook Configuration</h2>
+
+                <div class="field-group">
+                    <label for="webhookUrl">Webhook URL</label>
+                    <input class="text long-field" type="text" id="webhookUrl" name="webhookUrl"
+                           value="#if($config)$!config.webhookUrl#{else}${baseUrl}/plugins/servlet/github-webhook#end" readonly />
+                    <div class="description">This URL will be registered in GitHub Enterprise to receive webhook events</div>
+                </div>
+
+                <div class="field-group">
+                    <label for="webhookSecret">
+                        Webhook Secret<span class="aui-icon icon-required"></span>
+                    </label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input class="text long-field" type="password" id="webhookSecret" name="webhookSecret"
+                               placeholder="#if($hasWebhookSecret)Secret is set - enter new secret to update#else Enter webhook secret#end"
+                               style="flex: 1;" />
+                        <button type="button" class="aui-button" id="generate-secret-btn">
+                            <span class="aui-icon aui-icon-small aui-iconfont-refresh"></span>
+                            Generate
+                        </button>
+                    </div>
+                    <div class="description">
+                        Secret used to validate webhook requests from GitHub Enterprise.
+                        #if($hasWebhookSecret)
+                            <strong style="color: #00875a;">Secret is currently set.</strong> Leave empty to keep existing secret.
+                        #end
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- Repository Mappings -->
+                <h2>Repository Mappings</h2>
+                <p>Map Jira projects to GitHub repositories</p>
+
+                <div id="repository-mappings">
+                    #if($config && $config.repositories && $config.repositories.size() > 0)
+                        #foreach($repo in $config.repositories)
+                            <div class="repository-mapping aui-group" data-index="$velocityCount">
+                                <div class="aui-item">
+                                    <div class="field-group">
+                                        <label>Jira Project Key</label>
+                                        <input class="text" type="text" name="jiraProject" value="$!repo.jiraProject" placeholder="PROJ" />
+                                    </div>
+                                </div>
+                                <div class="aui-item">
+                                    <div class="field-group">
+                                        <label>GitHub Owner</label>
+                                        <input class="text" type="text" name="githubOwner" value="$!repo.githubOwner" placeholder="organization" />
+                                    </div>
+                                </div>
+                                <div class="aui-item">
+                                    <div class="field-group">
+                                        <label>GitHub Repository</label>
+                                        <input class="text" type="text" name="githubRepo" value="$!repo.githubRepo" placeholder="repository" />
+                                    </div>
+                                </div>
+                                <div class="aui-item">
+                                    <div class="field-group">
+                                        <label>Default Branch</label>
+                                        <input class="text" type="text" name="defaultBranch" value="#if($!repo.defaultBranch)$!repo.defaultBranch#{else}main#end" />
+                                    </div>
+                                </div>
+                                <div class="aui-item" style="align-self: flex-end;">
+                                    <button type="button" class="aui-button remove-mapping-btn">
+                                        <span class="aui-icon aui-icon-small aui-iconfont-remove"></span>
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        #end
+                    #end
+                </div>
+
+                <div class="field-group">
+                    <button type="button" class="aui-button" id="add-mapping-btn">
+                        <span class="aui-icon aui-icon-small aui-iconfont-add"></span>
+                        Add Repository Mapping
+                    </button>
+                </div>
+
+                <hr />
+
+                <!-- Branch Naming Template -->
+                <h2>Branch Naming Template</h2>
+
+                <div class="field-group">
+                    <label for="branchNaming">Branch Naming Template</label>
+                    <input class="text long-field" type="text" id="branchNaming" name="branchNaming"
+                           value="#if($config)$!config.branchNaming#{else}$defaultBranchNaming#end" />
+                    <div class="description">
+                        Template for branch names. Available variables: {issueKey}, {summary}, {projectKey}
+                        <br />Example: feature/{issueKey}-{summary}
+                    </div>
+                </div>
+
+                <hr />
+
+                <!-- Transition Mappings -->
+                <h2>Status Transition Mappings</h2>
+                <p>Map GitHub PR events to Jira issue transitions</p>
+
+                <div class="field-group">
+                    <label for="transition-pr-opened">PR Opened</label>
+                    <input class="text" type="text" id="transition-pr-opened" name="pr_opened"
+                           value="#if($config && $config.transitionMappings)$!config.transitionMappings.get('pr_opened')#{else}In Review#end" />
+                    <div class="description">Status to transition to when PR is opened</div>
+                </div>
+
+                <div class="field-group">
+                    <label for="transition-pr-merged">PR Merged</label>
+                    <input class="text" type="text" id="transition-pr-merged" name="pr_merged"
+                           value="#if($config && $config.transitionMappings)$!config.transitionMappings.get('pr_merged')#{else}Done#end" />
+                    <div class="description">Status to transition to when PR is merged</div>
+                </div>
+
+                <div class="field-group">
+                    <label for="transition-pr-closed">PR Closed</label>
+                    <input class="text" type="text" id="transition-pr-closed" name="pr_closed"
+                           value="#if($config && $config.transitionMappings)$!config.transitionMappings.get('pr_closed')#{else}Cancelled#end" />
+                    <div class="description">Status to transition to when PR is closed without merging</div>
+                </div>
+
+                <div class="field-group">
+                    <label for="transition-pr-reopened">PR Reopened</label>
+                    <input class="text" type="text" id="transition-pr-reopened" name="pr_reopened"
+                           value="#if($config && $config.transitionMappings)$!config.transitionMappings.get('pr_reopened')#{else}In Progress#end" />
+                    <div class="description">Status to transition to when PR is reopened</div>
+                </div>
+
+                <hr />
+
+                <!-- Webhook Registration -->
+                <h2>Webhook Registration</h2>
+                <p>Register webhooks with GitHub Enterprise repositories</p>
+
+                <div class="field-group">
+                    <button type="button" class="aui-button aui-button-primary" id="register-webhooks-btn">
+                        <span class="aui-icon aui-icon-small aui-iconfont-configure"></span>
+                        Register Webhooks
+                    </button>
+                    <span id="register-webhooks-status" style="margin-left: 10px;"></span>
+                </div>
+                <div class="description">
+                    This will create webhooks in each configured repository.
+                    #if($registeredWebhooks > 0)
+                        <br /><strong style="color: #00875a;">$registeredWebhooks webhook(s) currently registered.</strong>
+                    #end
+                </div>
+
+                <hr />
+
+                <!-- Form Actions -->
+                <div class="buttons-container">
+                    <div class="buttons">
+                        <button type="submit" class="aui-button aui-button-primary" id="save-config-btn">
+                            <span class="aui-icon aui-icon-small aui-iconfont-check"></span>
+                            Save Configuration
+                        </button>
+                        <button type="button" class="aui-button aui-button-link" id="cancel-btn">Cancel</button>
+                    </div>
+                    <div id="save-status" style="margin-left: 10px;"></div>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+
+<!-- Hidden data for JavaScript -->
+<input type="hidden" id="rest-url" value="$restUrl" />
+<input type="hidden" id="base-url" value="$baseUrl" />
+
+</body>
+</html>

@@ -1,0 +1,304 @@
+/**
+ * GitHub Integration Panel Styles
+ * Compatible with Jira 9.12+ and 10.3+
+ * Uses AUI (Atlassian User Interface) framework conventions
+ */
+
+/* Main Panel Container */
+#github-integration-panel {
+    margin-bottom: 20px;
+}
+
+#github-integration-panel .mod-header {
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ccc;
+    padding: 10px 15px;
+}
+
+#github-integration-panel .mod-header h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+#github-integration-panel .mod-content {
+    padding: 15px;
+}
+
+/* Action Buttons */
+.github-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.github-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.github-actions button .aui-icon {
+    margin-right: 3px;
+}
+
+/* GitHub Information Display */
+#github-info-container {
+    margin-top: 15px;
+}
+
+#github-info-container h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin: 15px 0 8px 0;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+
+#github-info-container h4:first-child {
+    margin-top: 0;
+}
+
+/* Branches List */
+.github-branches {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+}
+
+.github-branches li {
+    padding: 8px 10px;
+    border-left: 3px solid #6554c0;
+    background-color: #f9f9f9;
+    margin-bottom: 5px;
+}
+
+.github-branches li a {
+    color: #0052cc;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.github-branches li a:hover {
+    text-decoration: underline;
+}
+
+.github-branches li a::before {
+    content: "\f126";
+    font-family: "Font Awesome 5 Free";
+    margin-right: 8px;
+    color: #6554c0;
+}
+
+/* Pull Requests List */
+.github-prs {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.github-prs li {
+    padding: 8px 10px;
+    border-left: 3px solid #00875a;
+    background-color: #f9f9f9;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.github-prs li a {
+    color: #0052cc;
+    text-decoration: none;
+    font-weight: 500;
+    flex: 1;
+}
+
+.github-prs li a:hover {
+    text-decoration: underline;
+}
+
+/* PR Status Lozenges */
+.github-prs .aui-lozenge {
+    margin-left: 10px;
+    font-size: 11px;
+}
+
+.github-prs .aui-lozenge.status-open {
+    background-color: #00875a;
+    color: white;
+}
+
+.github-prs .aui-lozenge.status-closed {
+    background-color: #de350b;
+    color: white;
+}
+
+.github-prs .aui-lozenge.status-merged {
+    background-color: #6554c0;
+    color: white;
+}
+
+/* Loading State */
+.github-info-loading {
+    text-align: center;
+    padding: 20px;
+    color: #707070;
+}
+
+.github-info-loading .aui-icon-wait {
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* Empty State Message */
+#github-info-container .aui-message-generic {
+    margin: 10px 0;
+}
+
+/* Dialog Forms */
+.aui-dialog2-content form.aui .field-group {
+    margin-bottom: 20px;
+}
+
+.aui-dialog2-content form.aui label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.aui-dialog2-content form.aui input.text,
+.aui-dialog2-content form.aui textarea.textarea {
+    width: 100%;
+    max-width: 100%;
+}
+
+.aui-dialog2-content form.aui input.long-field,
+.aui-dialog2-content form.aui textarea.long-field {
+    width: 100%;
+}
+
+.aui-dialog2-content form.aui .description {
+    font-size: 12px;
+    color: #707070;
+    margin-top: 5px;
+}
+
+/* Dialog Footer Status */
+.aui-dialog2-footer-hint {
+    font-size: 12px;
+    color: #707070;
+}
+
+.aui-dialog2-footer-hint .aui-icon-wait {
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.aui-dialog2-footer-hint .aui-iconfont-error {
+    color: #de350b;
+    margin-right: 5px;
+}
+
+/* Configuration Not Set Message */
+#github-integration-panel .aui-message-info {
+    margin: 10px 0;
+}
+
+#github-integration-panel .aui-message-info .title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .github-actions {
+        flex-direction: column;
+    }
+
+    .github-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .github-prs li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .github-prs .aui-lozenge {
+        margin-left: 0;
+        margin-top: 5px;
+    }
+}
+
+/* Dark Mode Support (Jira 10.3+) */
+@media (prefers-color-scheme: dark) {
+    #github-integration-panel .mod-header {
+        background-color: #1d2125;
+        border-bottom-color: #3c4147;
+    }
+
+    #github-integration-panel .mod-header h2 {
+        color: #b6c2cf;
+    }
+
+    #github-integration-panel .mod-content {
+        background-color: #22272b;
+    }
+
+    #github-info-container h4 {
+        color: #b6c2cf;
+        border-bottom-color: #3c4147;
+    }
+
+    .github-branches li,
+    .github-prs li {
+        background-color: #2c333a;
+    }
+
+    .github-branches li a,
+    .github-prs li a {
+        color: #579dff;
+    }
+
+    .github-info-loading,
+    .aui-dialog2-content form.aui .description,
+    .aui-dialog2-footer-hint {
+        color: #9fadbc;
+    }
+}
+
+/* Animation for Loading State */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.github-info-loading .aui-icon-wait,
+.aui-dialog2-footer-hint .aui-icon-wait {
+    animation: spin 1s linear infinite;
+}
+
+/* Accessibility Improvements */
+.github-actions button:focus,
+.github-branches li a:focus,
+.github-prs li a:focus {
+    outline: 2px solid #4c9aff;
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    #github-integration-panel .github-actions {
+        display: none;
+    }
+
+    .github-branches li,
+    .github-prs li {
+        border-left-width: 2px;
+        page-break-inside: avoid;
+    }
+}
