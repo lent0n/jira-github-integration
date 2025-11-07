@@ -5,6 +5,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.healthcanada.jira.github.model.GitHubException;
 import com.healthcanada.jira.github.service.GitHubService;
 import com.healthcanada.jira.github.service.JiraService;
+import com.healthcanada.jira.github.util.ValidationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,52 +46,65 @@ public class GitHubIntegrationResource {
     @POST
     @Path("/branch/create")
     public Response createBranch(CreateBranchRequest request) {
+        String issueKey = null;
+        String branchName = null;
+
         try {
             // Validate user permissions
             ApplicationUser user = authenticationContext.getLoggedInUser();
             if (user == null) {
+                log.warn("Unauthenticated user attempted to create branch");
                 return Response.status(Response.Status.UNAUTHORIZED)
-                        .entity(errorResponse("User not authenticated"))
+                        .entity(errorResponse("Authentication required. Please log in to Jira."))
                         .build();
             }
 
-            if (!jiraService.hasViewPermission(user, request.getIssueKey())) {
+            // Validate and sanitize inputs
+            try {
+                issueKey = ValidationUtils.validateIssueKey(request.getIssueKey());
+                branchName = ValidationUtils.validateBranchName(request.getBranchName());
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid input for branch creation: {}", e.getMessage());
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(errorResponse(e.getMessage()))
+                        .build();
+            }
+
+            // Check issue permissions
+            if (!jiraService.hasViewPermission(user, issueKey)) {
+                log.warn("User {} denied access to issue {}", user.getUsername(), issueKey);
                 return Response.status(Response.Status.FORBIDDEN)
-                        .entity(errorResponse("Permission denied"))
+                        .entity(errorResponse("You do not have permission to access issue " + issueKey))
                         .build();
             }
 
-            // Validate request
-            if (request.getIssueKey() == null || request.getIssueKey().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(errorResponse("Issue key is required"))
-                        .build();
-            }
-
-            if (request.getBranchName() == null || request.getBranchName().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(errorResponse("Branch name is required"))
-                        .build();
-            }
+            log.info("User {} creating branch {} for issue {}", user.getUsername(), branchName, issueKey);
 
             // Create branch
             Map<String, Object> result = githubService.createBranch(
-                    request.getIssueKey(),
+                    issueKey,
                     request.getBaseBranch(),
-                    request.getBranchName()
+                    branchName
             );
 
+            log.info("Successfully created branch {} for issue {}", branchName, issueKey);
             return Response.ok(result).build();
 
         } catch (GitHubException e) {
-            log.error("GitHub error creating branch", e);
+            log.error("GitHub error creating branch {} for issue {}: {}", branchName, issueKey, e.getMessage(), e);
+            return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(errorResponse("Failed to create branch on GitHub: " + e.getMessage() +
+                                ". Please check your GitHub configuration and repository permissions."))
+                        .build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid input for branch creation: {}", e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(errorResponse(e.getMessage()))
                     .build();
         } catch (Exception e) {
-            log.error("Error creating branch", e);
+            log.error("Unexpected error creating branch {} for issue {}", branchName, issueKey, e);
             return Response.serverError()
-                    .entity(errorResponse("Internal server error: " + e.getMessage()))
+                    .entity(errorResponse("An unexpected error occurred. Please contact your administrator if the problem persists."))
                     .build();
         }
     }
@@ -102,60 +116,71 @@ public class GitHubIntegrationResource {
     @POST
     @Path("/pr/create")
     public Response createPullRequest(CreatePRRequest request) {
+        String issueKey = null;
+        String title = null;
+
         try {
             // Validate user permissions
             ApplicationUser user = authenticationContext.getLoggedInUser();
             if (user == null) {
+                log.warn("Unauthenticated user attempted to create pull request");
                 return Response.status(Response.Status.UNAUTHORIZED)
-                        .entity(errorResponse("User not authenticated"))
+                        .entity(errorResponse("Authentication required. Please log in to Jira."))
                         .build();
             }
 
-            if (!jiraService.hasViewPermission(user, request.getIssueKey())) {
+            // Validate and sanitize inputs
+            try {
+                issueKey = ValidationUtils.validateIssueKey(request.getIssueKey());
+                ValidationUtils.validateBranchName(request.getSourceBranch());
+                title = ValidationUtils.validateTitle(request.getTitle());
+                String description = ValidationUtils.validateDescription(request.getDescription());
+                request.setDescription(description);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid input for PR creation: {}", e.getMessage());
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(errorResponse(e.getMessage()))
+                        .build();
+            }
+
+            // Check issue permissions
+            if (!jiraService.hasViewPermission(user, issueKey)) {
+                log.warn("User {} denied access to issue {}", user.getUsername(), issueKey);
                 return Response.status(Response.Status.FORBIDDEN)
-                        .entity(errorResponse("Permission denied"))
+                        .entity(errorResponse("You do not have permission to access issue " + issueKey))
                         .build();
             }
 
-            // Validate request
-            if (request.getIssueKey() == null || request.getIssueKey().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(errorResponse("Issue key is required"))
-                        .build();
-            }
-
-            if (request.getSourceBranch() == null || request.getSourceBranch().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(errorResponse("Source branch is required"))
-                        .build();
-            }
-
-            if (request.getTitle() == null || request.getTitle().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(errorResponse("Title is required"))
-                        .build();
-            }
+            log.info("User {} creating PR for issue {} from branch {}",
+                    user.getUsername(), issueKey, request.getSourceBranch());
 
             // Create pull request
             Map<String, Object> result = githubService.createPullRequest(
-                    request.getIssueKey(),
+                    issueKey,
                     request.getSourceBranch(),
                     request.getTargetBranch(),
-                    request.getTitle(),
+                    title,
                     request.getDescription()
             );
 
+            log.info("Successfully created PR #{} for issue {}", result.get("number"), issueKey);
             return Response.ok(result).build();
 
         } catch (GitHubException e) {
-            log.error("GitHub error creating PR", e);
+            log.error("GitHub error creating PR for issue {}: {}", issueKey, e.getMessage(), e);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(errorResponse("Failed to create pull request on GitHub: " + e.getMessage() +
+                            ". Please verify the branch exists and you have permission to create pull requests."))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid input for PR creation: {}", e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(errorResponse(e.getMessage()))
                     .build();
         } catch (Exception e) {
-            log.error("Error creating PR", e);
+            log.error("Unexpected error creating PR for issue {}", issueKey, e);
             return Response.serverError()
-                    .entity(errorResponse("Internal server error: " + e.getMessage()))
+                    .entity(errorResponse("An unexpected error occurred. Please contact your administrator if the problem persists."))
                     .build();
         }
     }

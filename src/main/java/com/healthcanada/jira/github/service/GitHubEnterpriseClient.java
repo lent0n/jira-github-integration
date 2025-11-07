@@ -45,6 +45,11 @@ public class GitHubEnterpriseClient {
     private static final int CONNECT_TIMEOUT = 5000;
     private static final int SOCKET_TIMEOUT = 30000;
 
+    // Retry settings
+    private static final int MAX_RETRIES = 3;
+    private static final int INITIAL_RETRY_DELAY_MS = 1000;
+    private static final int MAX_RETRY_DELAY_MS = 10000;
+
     private String baseUrl;
     private String apiToken;
     private CloseableHttpClient httpClient;
@@ -280,31 +285,35 @@ public class GitHubEnterpriseClient {
     }
 
     /**
-     * Execute GET request
+     * Execute GET request with retry logic
      */
     private JsonNode executeGet(String url) throws GitHubException, IOException {
-        HttpGet request = new HttpGet(url);
-        addAuthHeaders(request);
+        return executeWithRetry(() -> {
+            HttpGet request = new HttpGet(url);
+            addAuthHeaders(request);
 
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
-            return handleResponse(response);
-        }
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                return handleResponse(response);
+            }
+        }, "GET " + url);
     }
 
     /**
-     * Execute POST request
+     * Execute POST request with retry logic
      */
     private JsonNode executePost(String url, Map<String, Object> body) throws GitHubException, IOException {
-        HttpPost request = new HttpPost(url);
-        addAuthHeaders(request);
-        request.setHeader("Content-Type", "application/json");
+        return executeWithRetry(() -> {
+            HttpPost request = new HttpPost(url);
+            addAuthHeaders(request);
+            request.setHeader("Content-Type", "application/json");
 
-        String jsonBody = objectMapper.writeValueAsString(body);
-        request.setEntity(new StringEntity(jsonBody, StandardCharsets.UTF_8));
+            String jsonBody = objectMapper.writeValueAsString(body);
+            request.setEntity(new StringEntity(jsonBody, StandardCharsets.UTF_8));
 
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
-            return handleResponse(response);
-        }
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                return handleResponse(response);
+            }
+        }, "POST " + url);
     }
 
     /**
@@ -337,6 +346,81 @@ public class GitHubEnterpriseClient {
     private void addAuthHeaders(HttpRequestBase request) {
         request.setHeader("Authorization", "Bearer " + apiToken);
         request.setHeader("Accept", "application/vnd.github.v3+json");
+    }
+
+    /**
+     * Execute operation with exponential backoff retry logic
+     */
+    private <T> T executeWithRetry(RetryableOperation<T> operation, String operationName)
+            throws GitHubException, IOException {
+        int attempt = 0;
+        GitHubException lastException = null;
+        IOException lastIOException = null;
+
+        while (attempt < MAX_RETRIES) {
+            try {
+                return operation.execute();
+            } catch (GitHubException e) {
+                lastException = e;
+                // Don't retry on client errors (4xx), only server errors (5xx) and network issues
+                if (e.getStatusCode() > 0 && e.getStatusCode() < 500) {
+                    throw e;
+                }
+                attempt++;
+                if (attempt < MAX_RETRIES) {
+                    int delay = calculateRetryDelay(attempt);
+                    log.warn("GitHub API {} failed (attempt {}/{}): {}. Retrying in {}ms",
+                            operationName, attempt, MAX_RETRIES, e.getMessage(), delay);
+                    sleep(delay);
+                }
+            } catch (IOException e) {
+                lastIOException = e;
+                attempt++;
+                if (attempt < MAX_RETRIES) {
+                    int delay = calculateRetryDelay(attempt);
+                    log.warn("Network error for {} (attempt {}/{}): {}. Retrying in {}ms",
+                            operationName, attempt, MAX_RETRIES, e.getMessage(), delay);
+                    sleep(delay);
+                }
+            }
+        }
+
+        // All retries exhausted
+        if (lastException != null) {
+            log.error("GitHub API {} failed after {} attempts", operationName, MAX_RETRIES);
+            throw lastException;
+        } else {
+            log.error("Network operation {} failed after {} attempts", operationName, MAX_RETRIES);
+            throw lastIOException;
+        }
+    }
+
+    /**
+     * Calculate exponential backoff delay
+     */
+    private int calculateRetryDelay(int attempt) {
+        int delay = INITIAL_RETRY_DELAY_MS * (int) Math.pow(2, attempt - 1);
+        return Math.min(delay, MAX_RETRY_DELAY_MS);
+    }
+
+    /**
+     * Sleep for specified milliseconds
+     */
+    private void sleep(int milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Retry sleep interrupted", e);
+        }
+    }
+
+    /**
+     * Functional interface for retryable operations
+     */
+    @FunctionalInterface
+    private interface RetryableOperation<T> {
+        T execute() throws GitHubException, IOException;
     }
 
     /**
