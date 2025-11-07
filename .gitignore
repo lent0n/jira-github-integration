@@ -45,3 +45,6 @@ Desktop.ini
 # Atlassian Plugin SDK
 amps-standalone/
 atlassian-ide-plugin.xml
+
+# Secrets
+Github Token.txt
